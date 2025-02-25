@@ -29,9 +29,6 @@ docs/Manifest.toml
 /examples/**/plots/
 /examples/**/trajectories/
 
-# generated Literate
-docs/src/generated/
-
 # external pkgs and configs
 pardiso.lic
 /.CondaPkg/
