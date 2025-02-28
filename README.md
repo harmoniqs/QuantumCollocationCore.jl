@@ -1,6 +1,6 @@
 <!--```@raw html-->
 <div align="center">
-  <a href="https://github.com/kestrelquantum/Piccolo.jl">
+  <a href="https://github.com/harmoniqs/Piccolo.jl">
     <img src="assets/logo.svg" alt="Piccolo.jl" width="25%"/>
   </a>
 </div>
@@ -11,21 +11,21 @@
       <td align="center">
         <b>Documentation</b>
         <br>
-        <a href="https://kestrelquantum.github.io/QuantumCollocationCore.jl/stable/">
+        <a href="https://docs.harmoniqs.co/QuantumCollocationCore.jl/stable/">
           <img src="https://img.shields.io/badge/docs-stable-blue.svg" alt="Stable"/>
         </a>
-        <a href="https://kestrelquantum.github.io/QuantumCollocationCore.jl/dev/">
+        <a href="https://docs.harmoniqs.co/QuantumCollocationCore.jl/dev/">
           <img src="https://img.shields.io/badge/docs-dev-blue.svg" alt="Dev"/>
         </a>
       </td>
       <td align="center">
         <b>Build Status</b>
         <br>
-        <a href="https://github.com/kestrelquantum/QuantumCollocationCore.jl/actions/workflows/CI.yml?query=branch%3Amain">
-          <img src="https://github.com/kestrelquantum/QuantumCollocationCore.jl/actions/workflows/CI.yml/badge.svg?branch=main" alt="Build Status"/>
+        <a href="https://github.com/harmoniqs/QuantumCollocationCore.jl/actions/workflows/CI.yml?query=branch%3Amain">
+          <img src="https://github.com/harmoniqs/QuantumCollocationCore.jl/actions/workflows/CI.yml/badge.svg?branch=main" alt="Build Status"/>
         </a>
-        <a href="https://codecov.io/gh/kestrelquantum/QuantumCollocationCore.jl">
-          <img src="https://codecov.io/gh/kestrelquantum/QuantumCollocationCore.jl/branch/main/graph/badge.svg" alt="Coverage"/>
+        <a href="https://codecov.io/gh/harmoniqs/QuantumCollocationCore.jl">
+          <img src="https://codecov.io/gh/harmoniqs/QuantumCollocationCore.jl/branch/main/graph/badge.svg" alt="Coverage"/>
         </a>
       </td>
       <td align="center">
@@ -53,6 +53,6 @@
 
 # QuantumCollocationCore
 
-**QuantumCollocationCore.jl** provides a core library for quantum collocation methods. It is designed to be used in conjunction with the [QuantumCollocation.jl](https://github.com/kestrelquantum/QuantumCollocation.jl) package and the [Piccolo.jl](https://github.com/kestrelquantum/Piccolo.jl) ecosystem, which provides a high-level interface for solving quantum optimal control problems using direct collocation.
+**QuantumCollocationCore.jl** provides a core library for quantum collocation methods. It is designed to be used in conjunction with the [QuantumCollocation.jl](https://github.com/harmoniqs/QuantumCollocation.jl) package and the [Piccolo.jl](https://github.com/harmoniqs/Piccolo.jl) ecosystem, which provides a high-level interface for solving quantum optimal control problems using direct collocation.
 
 The underlying nonlinear solver is [Ipopt.jl](https://github.com/jump-dev/Ipopt.jl), which is a Julia interface to the [Ipopt](https://coin-or.github.io/Ipopt/) solver. 

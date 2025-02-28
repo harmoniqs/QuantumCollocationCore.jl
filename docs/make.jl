@@ -4,7 +4,7 @@ using Literate
 
 push!(LOAD_PATH, joinpath(@__DIR__, "..", "src"))
 
-@info "Building Documenter site for Piccolo.jl"
+@info "Building Documenter site for QuantumCollocationCore.jl"
 open(joinpath(@__DIR__, "src", "index.md"), write = true) do io
     for line in eachline(joinpath(@__DIR__, "..", "README.md"))
         if occursin("<!--", line) && occursin("-->", line)
@@ -24,7 +24,7 @@ pages = [
 
 format = Documenter.HTML(;
     prettyurls=get(ENV, "CI", "false") == "true",
-    canonical="https://kestrelquantum.github.io/QuantumCollocationCore.jl",
+    canonical="https://docs.harmoniqs.co/QuantumCollocationCore.jl",
     edit_link="main",
     assets=String[],
     mathengine = MathJax3(Dict(
@@ -64,6 +64,6 @@ makedocs(;
 )
 
 deploydocs(;
-    repo="github.com/kestrelquantum/QuantumCollocationCore.jl",
+    repo="github.com/harmoniqs/QuantumCollocationCore.jl",
     devbranch="main",
 )
