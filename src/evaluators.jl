@@ -80,8 +80,10 @@ end
     g::AbstractVector,
     Z⃗::AbstractVector
 )
-    g[1:evaluator.n_dynamics_constraints] = evaluator.dynamics.F(Z⃗)
     offset = evaluator.n_dynamics_constraints
+    if offset > 0
+        g[1:offset] = evaluator.dynamics.F(Z⃗)
+    end
     for con ∈ evaluator.nonlinear_constraints
         g[offset .+ (1:con.dim)] = con.g(Z⃗)
         offset += con.dim
@@ -106,9 +108,13 @@ end
     J::AbstractVector,
     Z⃗::AbstractVector
 )
-    ∂s_dynamics = evaluator.dynamics.∂F(Z⃗)
-    for (k, ∂ₖ) in enumerate(∂s_dynamics)
-        J[k] = ∂ₖ
+    if evaluator.n_dynamics_constraints > 0
+        ∂s_dynamics = evaluator.dynamics.∂F(Z⃗)
+        for (k, ∂ₖ) in enumerate(∂s_dynamics)
+            J[k] = ∂ₖ
+        end
+    else
+        ∂s_dynamics = []
     end
     offset = length(∂s_dynamics)
     for con ∈ evaluator.nonlinear_constraints
@@ -145,19 +151,21 @@ end
         H[k] = σ∂²Lₖ
     end
 
-    μ_dynamics = μ[1:evaluator.n_dynamics_constraints]
-
     μ_offset = evaluator.n_dynamics_constraints
-
     offset = length(evaluator.objective.∂²L_structure(evaluator.trajectory))
 
-    μ∂²Fs = evaluator.dynamics.μ∂²F(Z⃗, μ_dynamics)
+    if μ_offset > 0
+        μ_dynamics = μ[1:μ_offset]
+        
+        μ∂²Fs = evaluator.dynamics.μ∂²F(Z⃗, μ_dynamics)
+        for (k, μ∂²Fₖ) in enumerate(μ∂²Fs)
+            H[offset + k] = μ∂²Fₖ
+        end
 
-    for (k, μ∂²Fₖ) in enumerate(μ∂²Fs)
-        H[offset + k] = μ∂²Fₖ
+        offset += length(evaluator.dynamics.μ∂²F_structure)
+    else
+        offset = 0
     end
-
-    offset += length(evaluator.dynamics.μ∂²F_structure)
 
     for con ∈ evaluator.nonlinear_constraints
         μ_con = μ[μ_offset .+ (1:con.dim)]

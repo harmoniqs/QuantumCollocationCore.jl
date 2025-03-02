@@ -29,8 +29,20 @@ struct QuantumDynamics <: AbstractDynamics
     ∂F::Function
     ∂F_structure::Vector{Tuple{Int, Int}}
     μ∂²F::Union{Function, Nothing}
-    μ∂²F_structure::Union{Vector{Tuple{Int, Int}}, Nothing}
+    μ∂²F_structure::Vector{Tuple{Int, Int}}
     dim::Int
+end
+
+function NullQuantumDynamics()
+    return QuantumDynamics(
+        nothing,
+        _ -> nothing,
+        _ -> nothing,
+        [],
+        nothing,
+        [],
+        0
+    )
 end
 
 function dynamics_components(integrators::Vector{<:AbstractIntegrator})
@@ -200,6 +212,14 @@ function QuantumDynamics(
     jacobian_structure=true,
     verbose=false
 )
+    if length(integrators) == 0
+        if verbose
+            println("        constructing Null dynamics function...")
+        end
+
+        return NullQuantumDynamics()
+    end
+
     if verbose
         println("        constructing knot point dynamics functions...")
     end
@@ -255,11 +275,23 @@ function QuantumDynamics(
             )
         μ∂²f_nnz = length(μ∂²f_structure)
     else
-        ∂f_structure, ∂F_structure = dynamics_structure(∂f, traj, dynamics_dim;
-            verbose=verbose,
-            jacobian=jacobian_structure,
-        )
-        μ∂²F_structure = nothing
+        function ∂F_structure_()
+            ∂f_structure = [(i, j) for i = 1:dynamics_dim, j = 1:2traj.dim]
+
+            ∂F_ = Vector{Tuple{Int,Int}}(undef, length(∂f_structure) * (traj.T - 1))
+            for t = 1:traj.T-1
+                ∂fₜ_structure = [
+                    (
+                        i + index(t, 0, dynamics_dim),
+                        j + index(t, 0, traj.dim)
+                    ) for (i, j) ∈ ∂f_structure
+                ]
+                ∂F_[slice(t, length(∂f_structure))] = ∂fₜ_structure
+            end
+            return ∂F_
+        end
+        ∂F_structure = ∂F_structure_()
+        μ∂²F_structure = []
     end
 
     ∂f_nnz = length(∂f_structure)
@@ -323,76 +355,76 @@ end
 QuantumDynamics(P::AbstractIntegrator, traj::NamedTrajectory; kwargs...) =
     QuantumDynamics([P], traj; kwargs...)
 
-function QuantumDynamics(
-    f::Function,
-    traj::NamedTrajectory;
-    verbose=false,
-)
-    dynamics_dim = length(f(traj[1].data, traj[2].data))
+# function QuantumDynamics(
+#     f::Function,
+#     traj::NamedTrajectory;
+#     verbose=false,
+# )
+#     dynamics_dim = length(f(traj[1].data, traj[2].data))
 
-    @views function F(Z⃗::AbstractVector{<:Real})
-        r = zeros(eltype(Z⃗), dynamics_dim * (traj.T - 1))
-        Threads.@threads for t = 1:traj.T-1
-            zₜ = Z⃗[slice(t, traj.dim)]
-            zₜ₊₁ = Z⃗[slice(t + 1, traj.dim)]
-            r[slice(t, dynamics_dim)] = f(zₜ, zₜ₊₁)
-        end
-        return r
-    end
+#     @views function F(Z⃗::AbstractVector{<:Real})
+#         r = zeros(eltype(Z⃗), dynamics_dim * (traj.T - 1))
+#         Threads.@threads for t = 1:traj.T-1
+#             zₜ = Z⃗[slice(t, traj.dim)]
+#             zₜ₊₁ = Z⃗[slice(t + 1, traj.dim)]
+#             r[slice(t, dynamics_dim)] = f(zₜ, zₜ₊₁)
+#         end
+#         return r
+#     end
 
-    # TODO: benchmark Zygote vs ForwardDiff for jacobian
-    # function ∂f(zₜ, zₜ₊₁)
-    #     ∂zₜf, ∂zₜ₊₁f = Zygote.jacobian(f, zₜ, zₜ₊₁)
-    #     ∂fₜ = hcat(∂zₜf, ∂zₜ₊₁f)
-    #     return ∂fₜ
-    # end
+#     # TODO: benchmark Zygote vs ForwardDiff for jacobian
+#     # function ∂f(zₜ, zₜ₊₁)
+#     #     ∂zₜf, ∂zₜ₊₁f = Zygote.jacobian(f, zₜ, zₜ₊₁)
+#     #     ∂fₜ = hcat(∂zₜf, ∂zₜ₊₁f)
+#     #     return ∂fₜ
+#     # end
 
-    @views f̂(zz) = f(zz[1:traj.dim], zz[traj.dim+1:end])
+#     @views f̂(zz) = f(zz[1:traj.dim], zz[traj.dim+1:end])
 
-    ∂f̂(zz) = ForwardDiff.jacobian(f̂, zz)
+#     ∂f̂(zz) = ForwardDiff.jacobian(f̂, zz)
 
-    ∂f_structure, ∂F_structure, μ∂²f_structure, μ∂²F_structure =
-        dynamics_structure(∂f̂, traj, dynamics_dim)
+#     ∂f_structure, ∂F_structure, μ∂²f_structure, μ∂²F_structure =
+#         dynamics_structure(∂f̂, traj, dynamics_dim)
 
-    ∂f(zₜ, zₜ₊₁) = ∂f̂([zₜ; zₜ₊₁])
+#     ∂f(zₜ, zₜ₊₁) = ∂f̂([zₜ; zₜ₊₁])
 
-    ∂f_nnz = length(∂f_structure)
+#     ∂f_nnz = length(∂f_structure)
 
-    @views function ∂F(Z⃗::AbstractVector{R}) where R <: Real
-        ∂ = zeros(R, length(∂F_structure))
-        Threads.@threads for t = 1:traj.T-1
-            zₜ = Z⃗[slice(t, traj.dim)]
-            zₜ₊₁ = Z⃗[slice(t + 1, traj.dim)]
-            ∂fₜ = ∂f(zₜ, zₜ₊₁)
-            for (k, (i, j)) ∈ enumerate(∂f_structure)
-                ∂[index(t, k, ∂f_nnz)] = ∂fₜ[i, j]
-            end
-        end
-        return ∂
-    end
+#     @views function ∂F(Z⃗::AbstractVector{R}) where R <: Real
+#         ∂ = zeros(R, length(∂F_structure))
+#         Threads.@threads for t = 1:traj.T-1
+#             zₜ = Z⃗[slice(t, traj.dim)]
+#             zₜ₊₁ = Z⃗[slice(t + 1, traj.dim)]
+#             ∂fₜ = ∂f(zₜ, zₜ₊₁)
+#             for (k, (i, j)) ∈ enumerate(∂f_structure)
+#                 ∂[index(t, k, ∂f_nnz)] = ∂fₜ[i, j]
+#             end
+#         end
+#         return ∂
+#     end
 
-    μf̂(zz, μ) = dot(μ, f̂(zz))
+#     μf̂(zz, μ) = dot(μ, f̂(zz))
 
-    @views function μ∂²f̂(zₜzₜ₊₁, μₜ)
-        return ForwardDiff.hessian(zz -> μf̂(zz, μₜ), zₜzₜ₊₁)
-    end
+#     @views function μ∂²f̂(zₜzₜ₊₁, μₜ)
+#         return ForwardDiff.hessian(zz -> μf̂(zz, μₜ), zₜzₜ₊₁)
+#     end
 
-    μ∂²f_nnz = length(μ∂²f_structure)
+#     μ∂²f_nnz = length(μ∂²f_structure)
 
-    @views function μ∂²F(Z⃗::AbstractVector{R}, μ::AbstractVector{R}) where R <: Real
-        μ∂² = zeros(R, length(μ∂²F_structure))
-        Threads.@threads for t = 1:traj.T-1
-            zₜzₜ₊₁ = Z⃗[slice(t:t+1, traj.dim)]
-            μₜ = μ[slice(t, dynamics_dim)]
-            μ∂²fₜ = μ∂²f̂(zₜzₜ₊₁, μₜ)
-            for (k, (i, j)) ∈ enumerate(μ∂²f_structure)
-                μ∂²[index(t, k, μ∂²f_nnz)] = μ∂²fₜ[i, j]
-            end
-        end
-        return μ∂²
-    end
+#     @views function μ∂²F(Z⃗::AbstractVector{R}, μ::AbstractVector{R}) where R <: Real
+#         μ∂² = zeros(R, length(μ∂²F_structure))
+#         Threads.@threads for t = 1:traj.T-1
+#             zₜzₜ₊₁ = Z⃗[slice(t:t+1, traj.dim)]
+#             μₜ = μ[slice(t, dynamics_dim)]
+#             μ∂²fₜ = μ∂²f̂(zₜzₜ₊₁, μₜ)
+#             for (k, (i, j)) ∈ enumerate(μ∂²f_structure)
+#                 μ∂²[index(t, k, μ∂²f_nnz)] = μ∂²fₜ[i, j]
+#             end
+#         end
+#         return μ∂²
+#     end
 
-    return QuantumDynamics(nothing, F, ∂F, ∂F_structure, μ∂²F, μ∂²F_structure, dynamics_dim)
-end
+#     return QuantumDynamics(nothing, F, ∂F, ∂F_structure, μ∂²F, μ∂²F_structure, dynamics_dim)
+# end
 
 end
