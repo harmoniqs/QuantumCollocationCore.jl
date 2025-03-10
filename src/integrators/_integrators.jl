@@ -104,7 +104,7 @@ function modify_integrator_suffix(
     end
 end
 
-function PiccoloQuantumObjects.add_suffix(
+function NamedTrajectories.add_suffix(
     integrator::AbstractIntegrator,
     suffix::String,
     traj::NamedTrajectory,
@@ -113,7 +113,7 @@ function PiccoloQuantumObjects.add_suffix(
     return modify_integrator_suffix(integrator, add_suffix, suffix, traj, mod_traj)
 end
 
-function PiccoloQuantumObjects.add_suffix(
+function NamedTrajectories.add_suffix(
     integrators::AbstractVector{<:AbstractIntegrator},
     suffix::String,
     traj::NamedTrajectory,
@@ -125,7 +125,7 @@ function PiccoloQuantumObjects.add_suffix(
     ]
 end
 
-function PiccoloQuantumObjects.remove_suffix(
+function NamedTrajectories.remove_suffix(
     integrator::AbstractIntegrator,
     suffix::String,
     traj::NamedTrajectory,
@@ -134,7 +134,7 @@ function PiccoloQuantumObjects.remove_suffix(
     return modify_integrator_suffix(integrator, remove_suffix, suffix, traj, mod_traj)
 end
 
-function PiccoloQuantumObjects.remove_suffix(
+function NamedTrajectories.remove_suffix(
     integrators::AbstractVector{<:AbstractIntegrator},
     suffix::String,
     traj::NamedTrajectory,
@@ -147,7 +147,6 @@ end
 # Get suffix utilities
 # --------------------
 
-Base.endswith(symb::Symbol, suffix::AbstractString) = endswith(String(symb), suffix)
 Base.endswith(integrator::UnitaryPadeIntegrator, suffix::String) = endswith(integrator.unitary_symb, suffix)
 Base.endswith(integrator::DerivativeIntegrator, suffix::String) = endswith(integrator.variable, suffix)
 
@@ -168,7 +167,7 @@ function Base.endswith(integrator::AbstractIntegrator, traj::NamedTrajectory, su
     return endswith(name, suffix)
 end
 
-function PiccoloQuantumObjects.get_suffix(
+function NamedTrajectories.get_suffix(
     integrators::AbstractVector{<:AbstractIntegrator},
     sys::AbstractQuantumSystem,
     traj::NamedTrajectory,

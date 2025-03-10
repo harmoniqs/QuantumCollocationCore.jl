@@ -381,7 +381,7 @@ function get_constraints(prob::QuantumControlProblem)
     ]
 end
 
-function PiccoloQuantumObjects.get_suffix(
+function NamedTrajectories.get_suffix(
     prob::QuantumControlProblem,
     subproblem_traj::NamedTrajectory,
     suffix::String;

@@ -405,6 +405,7 @@ end
 # ============================================================================= #
 
 @testitem "Unitary fidelity" begin
+
     X = [0 1; 1 0]
     X = [0 1; 1 0]
     Y = [0 -im; im 0]
@@ -515,18 +516,19 @@ end
 end
 
 @testitem "Free phase fidelity" begin
-    using PiccoloQuantumObjects
+    import PiccoloQuantumObjects
+
     n_levels = 3
     phase_data = [1.9, 2.7]
-    phase_operators = [PAULIS[:Z], PAULIS[:Z]]
-    subspace = get_subspace_indices([1:2, 1:2], [n_levels, n_levels])
+    phase_operators = [PiccoloQuantumObjects.PAULIS[:Z], PiccoloQuantumObjects.PAULIS[:Z]]
+    subspace = PiccoloQuantumObjects.get_subspace_indices([1:2, 1:2], [n_levels, n_levels])
 
-    R = free_phase(phase_data, phase_operators)
+    R = PiccoloQuantumObjects.free_phase(phase_data, phase_operators)
     @test R'R ≈ [1 0 0 0; 0 1 0 0; 0 0 1 0; 0 0 0 1]
     @test size(R) == (2^2, 2^2)
 
-    U_goal = EmbeddedOperator(GATES[:CZ], subspace, [n_levels, n_levels]).operator
-    U_final = EmbeddedOperator(R'GATES[:CZ], subspace, [n_levels, n_levels]).operator
+    U_goal = PiccoloQuantumObjects.EmbeddedOperator(PiccoloQuantumObjects.GATES[:CZ], subspace, [n_levels, n_levels]).operator
+    U_final = PiccoloQuantumObjects.EmbeddedOperator(R'PiccoloQuantumObjects.GATES[:CZ], subspace, [n_levels, n_levels]).operator
     # Value is ~0.3 without phases
     @test unitary_fidelity(U_final, U_goal, subspace=subspace) < 0.5
     @test unitary_free_phase_fidelity(
@@ -539,8 +541,8 @@ end
 
     # Forgot subspace
     @test_throws DimensionMismatch iso_vec_unitary_free_phase_fidelity(
-        operator_to_iso_vec(U_final),
-        operator_to_iso_vec(U_goal),
+        PiccoloQuantumObjects.operator_to_iso_vec(U_final),
+        PiccoloQuantumObjects.operator_to_iso_vec(U_goal),
         phase_data,
         phase_operators,
     )
